@@ -1,6 +1,8 @@
 #include <iostream>
 #include <cstring>
 #include <bitset>
+#include <cmath>
+#include <vector>
 
 using namespace std;
 
@@ -29,6 +31,7 @@ class Base64wn
 		string strDecoded;
 		string strBinary;
 		bool isNull(int vPos);
+        int binaryToDecimal(string vStr);
 };
 
 
@@ -46,10 +49,12 @@ void Base64wn::setEncoded(string vStr) {
 
 void Base64wn::setDecoded(string vStr) {
 	strDecoded = vStr;
+    strEncoded = "";
 	
 	//strEncoded.reserve(((vStr.size()/3) + (vStr.size() % 3 > 0)) * 4);
 
 	const char* cStr = vStr.data();
+    vector<string> tmpArray;
 
 	for (int i = 0; i < strlen(cStr); i++) {
 
@@ -63,14 +68,20 @@ void Base64wn::setDecoded(string vStr) {
         //cout << cStr << " " << strlen(cStr) << " " << i << "\n";
 	}
 
-    string tmpArray[] = "";
-
     for (int i = 0; i < (strBinary.length()/6); i++) {
-        tmpArray[i] = strBinary.substr((i*6),6);
+        tmpArray.push_back(strBinary.substr((i*6),6));
     }
 
-    for (int i = 0; i < sizeof(tmpArray); i++) {
-        cout << tmpArray[i];
+    for (int i = 0; i < tmpArray.size(); i++) {
+        strEncoded += strBase64Chars[binaryToDecimal(tmpArray[i])];
+    }
+
+    cout << strBinary.size() << "\n";
+
+    if ((strBinary.size() / 8) == 8) {
+         strEncoded += "==";
+    } else if ((strBinary.size() / 8) == 16) {
+        strEncoded += "=";
     }
 
 
@@ -103,6 +114,18 @@ bool Base64wn::isNull (int vPos) {
         }
 }
 
+int Base64wn::binaryToDecimal (string vStr) {
+    int tmpBin=stoi(vStr);
+    int decimal = 0, i = 0, rem;
+
+    while (tmpBin!=0) {
+        rem = tmpBin % 10;
+        tmpBin /= 10;
+        decimal += rem*pow(2,i);
+        i++;
+    }
+    return decimal;
+}
 
 
 bool isNull (string vStr, int vPos) {	
@@ -133,9 +156,9 @@ bool isNull (string vStr, int vPos) {
 int main () {
 	
 	Base64wn b64;	
-	b64.setDecoded("h<0>a");
+	b64.setDecoded("<0>alicia<0>password");
 
-    cout << b64.getBinary() << "\n";
+    cout << b64.getEncoded() << "\n";
 
 	return 0;
 }
