@@ -1,0 +1,155 @@
+#include <iostream>
+#include <cstring>
+#include <bitset>
+#include <cmath>
+#include <vector>
+
+using namespace std;
+
+static const string strNull = "<0>";
+
+static const bitset<8> bvNull = bitset<8>("0"); //00000000
+
+static const char strPad = '=';
+
+static const string strBase64Chars = 
+   "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+   "abcdefghijklmnopqrstuvwxyz"
+   "0123456789+/";
+
+
+class Base64wn 
+{
+   public:
+      Base64wn();    
+      void setEncoded(string vStr);
+      void setDecoded(string vStr);
+      string getEncoded();
+      string getDecoded(); 
+      string getBinary();  
+   
+   private:
+      string strEncoded;
+      string strDecoded;
+      string strBinary;
+      bool isNull(int vPos);
+      int binaryToDecimal(string vStr);
+};
+
+
+Base64wn::Base64wn(){
+   strEncoded = "";
+   strDecoded = "";  
+   strBinary  = "";
+}
+
+
+void Base64wn::setEncoded(string vStr) {
+   strEncoded = vStr;
+}
+
+void Base64wn::setDecoded(string vStr) {
+   strDecoded = vStr;
+   strEncoded = "";
+
+   int sizevStr = vStr.size();
+
+   bitset<8> vbBinary;
+   
+   const char* cStr = vStr.data();
+
+   for (int i = 0; i < vStr.size(); i++) {
+      if (!isNull(i)) {
+         bitset<8> b(cStr[i]);
+         strBinary.append(b.to_string());
+      } else {
+         strBinary.append("00000000");
+         i = i + (strNull.length()-1);    
+      } 
+
+      int bStrSize = strBinary.length();
+
+      if ((bStrSize%24)==0 && bStrSize>0) {
+         /*strEncoded += strBase64Chars[binaryToDecimal(strBinary.substr(((bStrSize)-24),6))];
+         strEncoded += strBase64Chars[binaryToDecimal(strBinary.substr(((bStrSize)-18),6))];
+         strEncoded += strBase64Chars[binaryToDecimal(strBinary.substr(((bStrSize)-12),6))];
+         strEncoded += strBase64Chars[binaryToDecimal(strBinary.substr(((bStrSize)-6),6))];*/
+         strEncoded += strBase64Chars[binaryToDecimal((strBinary & 0xFC0000) >> 18)];
+         strEncoded += strBase64Chars[binaryToDecimal((strBinary & 0x003F00) >> 12)];
+         strEncoded += strBase64Chars[binaryToDecimal((strBinary & 0x000FC0) >> 8)];
+         strEncoded += strBase64Chars[binaryToDecimal((strBinary & 0x00003F))];
+      }          
+   }
+
+   switch(strEncoded.length() % 3) 
+   {
+   case 1:
+      strEncoded.append(2,strPad);
+      break;
+   case 2:
+      strEncoded.append(1,strPad);
+      break;
+   }
+
+}
+
+
+string Base64wn::getEncoded() {
+   return strEncoded;
+}
+
+
+string Base64wn::getDecoded() {
+   return strDecoded;
+}
+
+
+string Base64wn::getBinary() {
+   return strBinary;
+}
+
+bool Base64wn::isNull (int vPos) {
+   if (strDecoded.length() < (strNull.length()+vPos)){
+      return false;
+        } else {
+         if (strcmp(strDecoded.substr(vPos,strNull.length()).data(),strNull.data()) != 0) {
+            return false;
+         } else {
+                 return true;
+                }
+        }
+}
+
+int Base64wn::binaryToDecimal (string vStr) {
+    int tmpBin=stoi(vStr);
+    int decimal = 0, i = 0, rem;
+
+    while (tmpBin!=0) {
+        rem = tmpBin % 10;
+        tmpBin /= 10;
+        decimal += rem*pow(2,i);
+        i++;
+    }
+    return decimal;
+}
+
+int main () {
+
+   Base64wn b64;
+
+   b64.setDecoded("<0>alice<0>password");
+   //b64.setDecoded("<0>tofol@msg.globalia-corp.com<0>exconco");
+   //b64.setDecoded("<0>");
+
+   cout << b64.getBinary() << "\n";
+   cout << b64.getEncoded() << "\n";
+   
+   cout << bvNull << "\n";
+   
+   bitset<8> strChar[16];
+   strChar[0]= 0x88;
+   bitset<8> bChar = 0x88;
+   cout << strChar[0].to_string() << "\n";
+
+   return 0;
+}
